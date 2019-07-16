@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  cloudwatch-logs-janitor
+
+Parameters:
+  LogGroupRetention:
+    Type: String
+    Default: 30
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+      - 7
+      - 14
+      - 30
+      - 60
+      - 90
+      - 120
+      - 150
+      - 180
+      - 365
+      - 400
+      - 545
+      - 731
+      - 1827
+      - 3653
+
+Globals:
+  Function:
+    Runtime: python3.7
+    MemorySize: 128
+    Timeout: 300
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: AllAtOnce
+    Environment:
+      Variables:
+        RETENTION_IN_DAYS: !Ref LogGroupRetention
+
+Resources:
+  SetExistingLogGroupsRetention:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cloudwatch_logs_janitor/
+      Handler: janitor.set_existing_log_groups_retention
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:DescribeLogGroups
+                - logs:PutRetentionPolicy
+              Resource: 'arn:aws:logs:*:*:log-group:*'
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+
+  SetNewLogGroupRetention:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cloudwatch_logs_janitor/
+      Handler: janitor.set_new_log_group_retention
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:PutRetentionPolicy
+              Resource: 'arn:aws:logs:*:*:log-group:*'
+      Events:
+        SubscribeEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - aws.logs
+              detail-type:
+                - AWS API Call via CloudTrail
+              detail:
+                eventSource:
+                  - logs.amazonaws.com
+                eventName:
+                  - CreateLogGroup
+
+  DeleteLogGroups:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cloudwatch_logs_janitor/
+      Handler: janitor.delete_log_groups
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:DeleteLogGroup
+                - logs:DescribeLogGroups
+              Resource: 'arn:aws:logs:*:*:log-group:*'
+            - Effect: Allow
+              Action:
+                - apigateway:GET
+              Resource: 'arn:aws:apigateway:*::/restapis/*'
+            - Effect: Allow
+              Action:
+                - lambda:GetFunction
+              Resource: 'arn:aws:lambda:*:*:function:*'         
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+
+Outputs:
+  SetExistingLogGroupsRetentionArn:
+    Value: !GetAtt SetExistingLogGroupsRetention.Arn
+  SetNewLogGroupRetentionArn:
+    Value: !GetAtt SetNewLogGroupRetention.Arn
+  DeleteLogGroupsArn:
+    Value: !GetAtt DeleteLogGroups.Arn
