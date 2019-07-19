@@ -30,7 +30,6 @@ Globals:
   Function:
     Runtime: python3.7
     MemorySize: 128
-    Timeout: 300
     AutoPublishAlias: live
     DeploymentPreference:
       Type: AllAtOnce
@@ -44,6 +43,7 @@ Resources:
     Properties:
       CodeUri: cloudwatch_logs_janitor/
       Handler: janitor.set_existing_log_groups_retention
+      Timeout: 900
       Policies:
         - Version: '2012-10-17'
           Statement:
@@ -63,6 +63,7 @@ Resources:
     Properties:
       CodeUri: cloudwatch_logs_janitor/
       Handler: janitor.set_new_log_group_retention
+      Timeout: 10
       Policies:
         - Version: '2012-10-17'
           Statement:
@@ -90,6 +91,7 @@ Resources:
     Properties:
       CodeUri: cloudwatch_logs_janitor/
       Handler: janitor.delete_log_groups
+      Timeout: 900
       Policies:
         - Version: '2012-10-17'
           Statement:
