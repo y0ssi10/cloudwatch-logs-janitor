@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  cloudwatch-logs-janitor
 
 Parameters:
   LogGroupRetention:
@@ -25,6 +23,19 @@ Parameters:
       - 731
       - 1827
       - 3653
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: cloudwatch-logs-janitor
+    Description: Applications to optimize the CloudWatch log groups
+    Author: y0ssi10
+    SpdxLicenseId: MIT
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['cloudwatch', 'logs', 'optimization']
+    HomePageUrl: https://github.com/y0ssi10/cloudwatch-logs-janitor
+    SemanticVersion: 1.0.0
+    SourceCodeUrl: https://github.com/y0ssi10/cloudwatch-logs-janitor
 
 Globals:
   Function:
